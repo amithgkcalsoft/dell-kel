@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+canvas, svg {
+  position: absolute;
+  top: 100;
+}
+.axis text.label {
+  font-size: 12px;
+  cursor: move;
+  padding-bottom: 24px;
+  fill: #ddd;
+}
+body {
+  font: small Arial;
+  background-color: #353535;
+  color: white;
+  overflow-x: hidden;
+  line-height: 1.4em;
+  /* background: #f7f7f7; */
+  /* color: #404040; */
+}
