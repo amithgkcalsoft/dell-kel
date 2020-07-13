@@ -20,7 +20,7 @@ export namespace Components {
          */
         "middle": string;
     }
-    interface PageComponent {
+    interface ParallelCoordinates {
         "singleData": string;
     }
 }
@@ -31,15 +31,15 @@ declare global {
         prototype: HTMLMyComponentElement;
         new (): HTMLMyComponentElement;
     };
-    interface HTMLPageComponentElement extends Components.PageComponent, HTMLStencilElement {
+    interface HTMLParallelCoordinatesElement extends Components.ParallelCoordinates, HTMLStencilElement {
     }
-    var HTMLPageComponentElement: {
-        prototype: HTMLPageComponentElement;
-        new (): HTMLPageComponentElement;
+    var HTMLParallelCoordinatesElement: {
+        prototype: HTMLParallelCoordinatesElement;
+        new (): HTMLParallelCoordinatesElement;
     };
     interface HTMLElementTagNameMap {
         "my-component": HTMLMyComponentElement;
-        "page-component": HTMLPageComponentElement;
+        "parallel-coordinates": HTMLParallelCoordinatesElement;
     }
 }
 declare namespace LocalJSX {
@@ -57,12 +57,12 @@ declare namespace LocalJSX {
          */
         "middle"?: string;
     }
-    interface PageComponent {
+    interface ParallelCoordinates {
         "singleData"?: string;
     }
     interface IntrinsicElements {
         "my-component": MyComponent;
-        "page-component": PageComponent;
+        "parallel-coordinates": ParallelCoordinates;
     }
 }
 export { LocalJSX as JSX };
@@ -70,7 +70,7 @@ declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
             "my-component": LocalJSX.MyComponent & JSXBase.HTMLAttributes<HTMLMyComponentElement>;
-            "page-component": LocalJSX.PageComponent & JSXBase.HTMLAttributes<HTMLPageComponentElement>;
+            "parallel-coordinates": LocalJSX.ParallelCoordinates & JSXBase.HTMLAttributes<HTMLParallelCoordinatesElement>;
         }
     }
 }

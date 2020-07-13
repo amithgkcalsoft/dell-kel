@@ -1,7 +1,6 @@
 :host {
   display: block;
 }
-
 canvas, svg {
   position: absolute;
   top: 100;
