@@ -8,10 +8,6 @@ import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 export namespace Components {
     interface MyComponent {
         /**
-          * The first name
-         */
-        "first": string;
-        /**
           * The last name
          */
         "last": string;
@@ -19,9 +15,16 @@ export namespace Components {
           * The middle name
          */
         "middle": string;
+        /**
+          * The first name
+         */
+        "selectedRange": Array<Object>;
     }
     interface ParallelCoordinates {
+        "completedata": Array<Object>;
         "singleData": string;
+    }
+    interface SecComponent {
     }
 }
 declare global {
@@ -37,17 +40,20 @@ declare global {
         prototype: HTMLParallelCoordinatesElement;
         new (): HTMLParallelCoordinatesElement;
     };
+    interface HTMLSecComponentElement extends Components.SecComponent, HTMLStencilElement {
+    }
+    var HTMLSecComponentElement: {
+        prototype: HTMLSecComponentElement;
+        new (): HTMLSecComponentElement;
+    };
     interface HTMLElementTagNameMap {
         "my-component": HTMLMyComponentElement;
         "parallel-coordinates": HTMLParallelCoordinatesElement;
+        "sec-component": HTMLSecComponentElement;
     }
 }
 declare namespace LocalJSX {
     interface MyComponent {
-        /**
-          * The first name
-         */
-        "first"?: string;
         /**
           * The last name
          */
@@ -56,13 +62,22 @@ declare namespace LocalJSX {
           * The middle name
          */
         "middle"?: string;
+        /**
+          * The first name
+         */
+        "selectedRange"?: Array<Object>;
     }
     interface ParallelCoordinates {
+        "completedata"?: Array<Object>;
         "singleData"?: string;
+    }
+    interface SecComponent {
+        "onTodoCompleted"?: (event: CustomEvent<Array<Object>>) => void;
     }
     interface IntrinsicElements {
         "my-component": MyComponent;
         "parallel-coordinates": ParallelCoordinates;
+        "sec-component": SecComponent;
     }
 }
 export { LocalJSX as JSX };
@@ -71,6 +86,7 @@ declare module "@stencil/core" {
         interface IntrinsicElements {
             "my-component": LocalJSX.MyComponent & JSXBase.HTMLAttributes<HTMLMyComponentElement>;
             "parallel-coordinates": LocalJSX.ParallelCoordinates & JSXBase.HTMLAttributes<HTMLParallelCoordinatesElement>;
+            "sec-component": LocalJSX.SecComponent & JSXBase.HTMLAttributes<HTMLSecComponentElement>;
         }
     }
 }
