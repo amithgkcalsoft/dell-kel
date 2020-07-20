@@ -7,7 +7,21 @@
       content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0"
     />
     <title>Stencil Component Starter</title>
+<<<<<<< HEAD
 
+=======
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3-selection-multi.v1.min.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+    <script
+      src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"
+      type="text/javascript"
+    ></script>
+
+>>>>>>> features
     <script type="module" src="/build/firstcomponent.esm.js"></script>
     <script nomodule src="/build/firstcomponent.js"></script>
   </head>
@@ -28,6 +42,7 @@
         <my-component first="Stencil" last=""></my-component>
       </div>
       <div id="Maincontent" style="width: 70%; float: left;">
+<<<<<<< HEAD
         <parallel-coordinates></parallel-coordinates>
       </div>
     </div>
@@ -52,6 +67,42 @@
         name: "compute-1-1, February 17 2020 23:30",
         rack: "Rack 1",
       }; // arr is the array you are want to pass
+=======
+        <parallel-coordinates completedata=""></parallel-coordinates>
+      </div>
+    </div>
+    <script>
+      $(document).ready(function () {
+        let cmp = document.querySelector("parallel-coordinates");
+
+        // d3.json("./data/influxdb17Feb_2020_withoutJobLoad.json").then(function (
+        //   data
+        // ) {
+        //   debugger;
+        //   cmp.completedata = data;
+        // });
+
+        cmp.singleData = {
+          "CPU1 Temp": 62,
+          "CPU2 Temp": 49,
+          Cluster: 0,
+          "Fan1 speed": 10080,
+          "Fan2 speed": 10080,
+          "Fan3 speed": 10080,
+          "Fan4 speed": 10080,
+          "Inlet Temp": 17,
+          "Job load": null,
+          "Memory usage": 6.565,
+          "Power consumption": 149,
+          Time: "2020-02-17T18:00:00.000Z",
+          compute: "compute-1-1",
+          group: "(50.5-74.25)",
+          id: "compute-1-1-0",
+          name: "compute-1-1, February 17 2020 23:30",
+          rack: "Rack 1",
+        }; // arr is the array you are want to pass
+      });
+>>>>>>> features
     </script>
   </body>
 </html>

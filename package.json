@@ -33,6 +33,7 @@
     "d3-selection-multi": "^1.0.1",
     "d3-stencil": "^2.2.3",
     "jquery": "^3.3.1",
+    "sortablejs": "^1.8.4",
     "underscore": "^1.9.1"
   }
 }
