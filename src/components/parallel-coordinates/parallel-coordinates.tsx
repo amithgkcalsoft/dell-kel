@@ -29,43 +29,62 @@ export class ParallelCoordinates implements ComponentInterface {
   settings = setting();
 
   @Watch("completedata")
-  watchHandler(newValue) {
+  watchCompleteData() {
+    debugger;
     let elementsObj = myServicee.setCanvusElements(this.element);
-    if (newValue != undefined) {
+    d3.selectAll(
+      elementsObj.element.shadowRoot.querySelectorAll("svg g")
+    ).remove();
+
+    if (this.completedata != undefined) {
       let serviceFullList_withExtra = this.settings.getServiceFLE();
-      this.mains.initFunc(newValue, serviceFullList_withExtra, elementsObj);
+      this.mains.initFunc(
+        this.completedata,
+        serviceFullList_withExtra,
+        elementsObj
+      );
     }
   }
 
   componentDidLoad() {
-    let fulldata = this;
-    d3.csv("./data/sampleData.csv").then(function (data) {
-      data = data.slice(0, 66);
-
-      data.forEach((d) => {
-        d.Time = new Date(
-          d3.timeFormat("%a %b %d %X CDT %Y")(
-            new Date(+d.Time ? +d.Time : d.Time.replace("Z", ""))
-          )
-        );
-        for (const property in d) {
-          if (
-            property != "Time" &&
-            property != "compute" &&
-            property != "group" &&
-            property != "id" &&
-            property != "name" &&
-            property != "rack"
-          )
-            d[property] = JSON.parse(d[property]);
-        }
-      });
-      fulldata.completedata = data;
-    });
+    debugger;
+    let elementsObj = myServicee.setCanvusElements(this.element);
+    if (this.completedata != undefined) {
+      let serviceFullList_withExtra = this.settings.getServiceFLE();
+      this.mains.initFunc(
+        this.completedata,
+        serviceFullList_withExtra,
+        elementsObj
+      );
+    }
+    // let fulldata = this;
+    // d3.csv("./data/sampleData.csv").then(function (data) {
+    //   data = data.slice(0, 66);
+    //   data.forEach((d) => {
+    //     d.Time = new Date(
+    //       d3.timeFormat("%a %b %d %X CDT %Y")(
+    //         new Date(+d.Time ? +d.Time : d.Time.replace("Z", ""))
+    //       )
+    //     );
+    //     for (const property in d) {
+    //       if (
+    //         property != "Time" &&
+    //         property != "compute" &&
+    //         property != "group" &&
+    //         property != "id" &&
+    //         property != "name" &&
+    //         property != "rack"
+    //       )
+    //         d[property] = JSON.parse(d[property]);
+    //     }
+    //   });
+    //   fulldata.completedata = data;
+    // });
   }
-  componentWillLoad() {
-    this.watchHandler(this.completedata);
-  }
+  // componentWillLoad() {
+  //   debugger;
+  //   this.watchCompleteData();
+  // }
   render() {
     return (
       <Host>
@@ -85,6 +104,21 @@ export class ParallelCoordinates implements ComponentInterface {
             <option value="violin">Violin plots</option>
             <option value="violin+tick">Violin plots + ticks</option>
           </select>
+        </div>
+        <div>
+          <table
+            class="table table-striped table-hover row s12"
+            id="axisSetting"
+          >
+            <thead class="thead-dark">
+              <tr>
+                <th></th>
+                <th>Color by</th>
+                <th>Metric</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
       </Host>
     );

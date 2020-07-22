@@ -1,7 +1,8 @@
 :host {
   display: block;
 }
-canvas, svg {
+canvas,
+svg {
   position: absolute;
   top: 100;
 }
@@ -19,4 +20,12 @@ body {
   line-height: 1.4em;
   /* background: #f7f7f7; */
   /* color: #404040; */
+}
+.hide {
+  display: none !important;
+}
+.axisActive .label,
+.axisActive td {
+  fill: #5ae !important;
+  color: #5ae;
 }

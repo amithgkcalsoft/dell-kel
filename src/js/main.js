@@ -4,7 +4,7 @@ import { setting } from "../js/setting";
 import { myServicee } from "../services/my-service";
 import _ from "underscore";
 import { viiolinplot } from "../js/violinChart";
-
+import Sortable from "sortablejs";
 export function main() {
   let width, height;
   let settings = setting();
@@ -53,6 +53,10 @@ export function main() {
   ];
   var chosenService = 0;
   var conf = {};
+  const TIMEKEY = "Time";
+  const TIMEFORMAT = d3.timeFormat("%B %d %Y %H:%M");
+
+  var stickKey = TIMEKEY;
   conf.serviceList = settings.serviceList;
   conf.serviceLists = settings.serviceLists;
   conf.serviceListattr = settings.serviceListattr;
@@ -268,8 +272,10 @@ export function main() {
     }
   }
   function invert_axis(d) {
+    debugger;
     // save extent before inverting
-    var extent;
+    let allElem = myServicee.getCanvusElements();
+    let extent;
     svg
       .selectAll(".brush")
       .filter((ds) => ds === d)
@@ -284,7 +290,7 @@ export function main() {
 
     if (yscale[d].inverted == true) {
       yscale[d].range([h, 0]);
-      d3.selectAll(".label")
+      d3.selectAll(allElem.element.shadowRoot.querySelectorAll(".label"))
         .filter(function (p) {
           return p == d;
         })
@@ -292,7 +298,7 @@ export function main() {
       yscale[d].inverted = false;
     } else {
       yscale[d].range([0, h]);
-      d3.selectAll(".label")
+      d3.selectAll(allElem.element.shadowRoot.querySelectorAll(".label"))
         .filter(function (p) {
           return p == d;
         })
@@ -557,9 +563,9 @@ export function main() {
     });
     serviceFullList_withExtraa = serviceFullList_withExtra;
     let allElem = myServicee.getCanvusElements();
-    drawFiltertable(serviceFullList_withExtra);
+    drawFiltertable(serviceFullList_withExtra, allElem);
     onChangeOfShow(allElementsObj);
-    setColorsAndThresholds("CPU1 Temp", serviceFullList_withExtra);
+    // setColorsAndThresholds("CPU1 Temp", serviceFullList_withExtra);
     dimensions = [];
     timel;
     if (timel) timel.stop();
@@ -615,7 +621,7 @@ export function main() {
       .append("svg:g")
       .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
 
-    // svg.selectAll("*").remove();
+    svg.selectAll("*").remove();
     // Load the data and visualization
 
     // Load the data and visualization
@@ -670,16 +676,23 @@ export function main() {
     // legend = create_legend(colors, brush);
     if (!settings.serviceFullList.find((d) => d.text === selectedService))
       selectedService = settings.serviceFullList[0].text;
-    // const selecteds = d3
-    //   .select("#axisSetting")
-    //   .select("tbody")
-    //   .selectAll("tr")
-    //   .filter((d) => d.arr === selectedService)
-    //   .select('input[type="radio"]')
-    //   .property("checked", true);
-    // _.bind(selecteds.on("change"), selecteds.node())();
+    const selecteds = d3
+      .select(allElem.element.shadowRoot.querySelectorAll("#axisSetting")[0])
+      .select("tbody")
+      .selectAll("tr")
+      .filter((d) => d.arr === selectedService)
+      .select('input[type="radio"]')
+      .property("checked", true);
+    _.bind(selecteds.on("change"), selecteds.node())();
 
-    // changeVar(d3.select("#axisSetting").selectAll('tr').data().find(d=>d.arr==selectedService));
+    // changeVar(
+    //   d3
+    //     .select(allElem.element.shadowRoot.querySelectorAll("#axisSetting")[0])
+    //     .selectAll("tr")
+    //     .data()
+    //     .find((d) => d.arr == selectedService),
+    //   serviceFullList_withExtra
+    // );
     // Render full foreground
     brush();
     console.log("---init---");
@@ -687,7 +700,7 @@ export function main() {
   function brush(isreview) {
     var actives = [],
       extents = [];
-
+    let allElem = myServicee.getCanvusElements();
     svg
       .selectAll(".brush")
       .filter(function (d) {
@@ -706,7 +719,7 @@ export function main() {
       });
     // hack to hide ticks beyond extent
     var b = d3
-      .selectAll(".dimension")
+      .selectAll(allElem.element.shadowRoot.querySelectorAll(".dimension"))
       .nodes()
       .forEach(function (element, i) {
         var dimension = d3.select(element).data()[0];
@@ -730,10 +743,13 @@ export function main() {
         d3.select(element).selectAll(".label").style("display", null);
       });
     // bold dimensions with label
-    d3.selectAll(".label").style("font-weight", function (dimension) {
-      if (_.include(actives, dimension)) return "bold";
-      return null;
-    });
+    d3.selectAll(allElem.element.shadowRoot.querySelectorAll(".label")).style(
+      "font-weight",
+      function (dimension) {
+        if (_.include(actives, dimension)) return "bold";
+        return null;
+      }
+    );
 
     // Get lines within extents
     var selected = [];
@@ -1007,9 +1023,42 @@ export function main() {
     ctx.lineTo(x0 + 15, y0); // right edge
     ctx.stroke();
   }
+  function add_axis(d, g, serviceFullList_withExtra) {
+    const target = serviceFullList_withExtra.find((e) => e.text === d);
+    if (target) {
+      // dimensions.splice(dimensions.length-1, 0, d);
+      target.enable = true;
+      dimensions.push(d);
+      dimensions = _.intersection(listMetric.toArray(), dimensions);
+      xscale.domain(dimensions);
+      // g.attr("transform", function(p) { return "translate(" + position(p) + ")"; });
+      updateDimension();
+      update_ticks();
+    }
+  }
+  function filterAxisbyDom(d, serviceFullList_withExtra) {
+    const pdata = d3.select(this.parentElement.parentElement).datum();
+    if (d.value.enable !== this.checked) {
+      d.value.enable = this.checked;
+      if (this.checked) {
+        add_axis(pdata.arr, g, serviceFullList_withExtra);
+        d3.select(this.parentElement.parentElement).classed("disable", false);
+      } else {
+        remove_axis(pdata.arr, g);
+        d3.select(this.parentElement.parentElement).classed("disable", true);
+      }
+      // TODO required to avoid a bug
+      var extent = d3.brushSelection(
+        svg.selectAll(".dimension").filter((d) => d == pdata.arr)
+      );
+      if (extent) extent = extent.map(yscale[d].invert).sort((a, b) => a - b);
+      update_ticks(pdata.arr, extent);
+    }
+  }
 
   let listOption = [];
-  function drawFiltertable(serviceFullList_withExtra) {
+  function drawFiltertable(serviceFullList_withExtra, allElem) {
+    debugger;
     listOption = serviceFullList_withExtra.map((e, ei) => {
       return {
         service: e.text,
@@ -1022,168 +1071,183 @@ export function main() {
       };
     });
 
-    // let table = d3.select("#axisSetting").select("tbody");
-    // table
-    //   .selectAll("tr")
-    //   .data(listOption)
-    //   .join(
-    //     (enter) => {
-    //       const tr = enter.append("tr");
-    //       tr.attr("data-id", (d) => d.arr);
-    //       tr.classed("hide", (d) => d.hide);
-    //       tr.each(function (d) {
-    //         d.tableObj = d3.select(this);
-    //       });
-    //       const alltr = tr
-    //         .selectAll("td")
-    //         .data((d) => [
-    //           { key: "enable", value: d, type: "checkbox" },
-    //           {
-    //             key: "colorBy",
-    //             value: false,
-    //             type: "radio",
-    //           },
-    //           { key: "text", value: d.text },
-    //         ])
-    //         .enter()
-    //         .append("td");
-    //       alltr
-    //         .filter((d) => d.type === "radio")
-    //         .append("input")
-    //         .attrs(function (d, i) {
-    //           const pdata = d3.select(this.parentElement.parentElement).datum();
-    //           return {
-    //             type: "radio",
-    //             name: "colorby",
-    //             value: pdata.service,
-    //           };
-    //         })
-    //         .on("change", function (d) {
-    //           debugger;
-    //           d3.select("tr.axisActive").classed("axisActive", false);
-    //           d3.select(this.parentElement.parentElement).classed(
-    //             "axisActive",
-    //             true
-    //           );
-    //           console.log("radio changed");
-    //           changeVar(d3.select(this.parentElement.parentElement).datum());
-    //           brush();
-    //         });
-    //       alltr
-    //         .filter((d) => d.key === "enable")
-    //         .append("input")
-    //         .attrs(function (d, i) {
-    //           return {
-    //             type: "checkbox",
-    //             checked: serviceFullList_withExtra[d.value.order].enable
-    //               ? "checked"
-    //               : null,
-    //           };
-    //         })
-    //         .on("adjustValue", function (d) {
-    //           d3.select(this).attr(
-    //             "checked",
-    //             serviceFullList_withExtra[d.value.order].enable
-    //               ? "checked"
-    //               : null
-    //           );
-    //         })
-    //         .on("change", function (d) {
-    //           debugger;
-    //           filterAxisbyDom.call(this, d);
-    //           xscale.domain(dimensions);
-    //           d3.select("#foreground").style("opacity", foreground_opacity);
-    //           brush();
-    //         });
-    //       alltr.filter((d) => d.type === undefined).text((d) => d.value);
-    //     },
-    //     (update) => {
-    //       const tr = update;
-    //       tr.classed("hide", (d) => d.hide);
-    //       tr.each(function (d) {
-    //         d.tableObj = d3.select(this);
-    //       });
-    //       tr.attr("data-id", (d) => d.arr);
-    //       const alltr = tr.selectAll("td").data((d) => [
-    //         { key: "enable", value: d, type: "checkbox" },
-    //         {
-    //           key: "colorBy",
-    //           value: false,
-    //           type: "radio",
-    //         },
-    //         { key: "text", value: d.text },
-    //       ]);
-    //       alltr.filter((d) => d.type === undefined).text((d) => d.value);
-    //       alltr
-    //         .filter((d) => d.key === "enable")
-    //         .select("input")
-    //         .each(function (d) {
-    //           this.checked = serviceFullList_withExtra[d.value.order].enable;
-    //         });
-    //     }
-    //   );
-    // listMetric = Sortable.create($("tbody")[0], {
-    //   animation: 150,
-    //   sort: true,
-    //   dataIdAttr: "data-id",
-    //   filter: ".disable",
-    //   onStart: function (/**Event*/ evt) {
-    //     evt.oldIndex; // element index within parent
-    //     const currentAxis = d3.select(evt.item).datum();
-    //     const chosenAxis = svg
-    //       .selectAll(".dimension")
-    //       .filter((d) => d == currentAxis.arr);
-    //     _.bind(dragstart, chosenAxis.node(), chosenAxis.datum())();
-    //   },
-    //   onEnd: function (/**Event*/ evt) {
-    //     var itemEl = evt.item; // dragged HTMLElement
-    //     evt.to; // target list
-    //     evt.from; // previous list
-    //     evt.oldIndex; // element's old index within old parent
-    //     evt.newIndex; // element's new index within new parent
-    //     evt.clone; // the clone element
-    //     evt.pullMode; // when item is in another sortable: `"clone"` if cloning, `true` if moving
-    //     const currentAxis = d3.select(itemEl).datum();
-    //     const chosenAxis = svg
-    //       .selectAll(".dimension")
-    //       .filter((d) => d == currentAxis.arr);
-    //     _.bind(dragend, chosenAxis.node(), chosenAxis.datum())();
-    //   },
-    //   onMove: function (/**Event*/ evt, /**Event*/ originalEvent) {
-    //     // Example: https://jsbin.com/nawahef/edit?js,output
-    //     evt.dragged; // dragged HTMLElement
-    //     evt.draggedRect; // DOMRect {left, top, right, bottom}
-    //     evt.related; // HTMLElement on which have guided
-    //     evt.relatedRect; // DOMRect
-    //     evt.willInsertAfter; // Boolean that is true if Sortable will insert drag element after target by default
-    //     originalEvent.clientY; // mouse position
-    //     // return false; — for cancel
-    //     // return -1; — insert before target
-    //     // return 1; — insert after target
-    //     // console.log(originalEvent);
-    //     // console.log(d3.event);
-    //     const currentAxis = d3.select(evt.dragged).datum();
-    //     const relatedtAxis = d3.select(evt.related).datum();
-    //     const chosenAxis = svg
-    //       .selectAll(".dimension")
-    //       .filter((d) => d === currentAxis.arr);
+    let table = d3
+      .select(allElem.element.shadowRoot.querySelectorAll("#axisSetting")[0])
+      .select("tbody");
+    table
+      .selectAll("tr")
+      .data(listOption)
+      .join(
+        (enter) => {
+          const tr = enter.append("tr");
+          tr.attr("data-id", (d) => d.arr);
+          tr.classed("hide", (d) => d.hide);
+          tr.each(function (d) {
+            d.tableObj = d3.select(this);
+          });
+          const alltr = tr
+            .selectAll("td")
+            .data((d) => [
+              { key: "enable", value: d, type: "checkbox" },
+              {
+                key: "colorBy",
+                value: false,
+                type: "radio",
+              },
+              { key: "text", value: d.text },
+            ])
+            .enter()
+            .append("td");
+          alltr
+            .filter((d) => d.type === "radio")
+            .append("input")
+            .attrs(function (d, i) {
+              const pdata = d3.select(this.parentElement.parentElement).datum();
+              return {
+                type: "radio",
+                name: "colorby",
+                value: pdata.service,
+              };
+            })
+            .on("change", function (d) {
+              debugger;
+              d3.select(
+                allElem.element.shadowRoot.querySelectorAll("tr.axisActive")[0]
+              ).classed("axisActive", false);
+              d3.select(this.parentElement.parentElement).classed(
+                "axisActive",
+                true
+              );
+              console.log("radio changed");
+              changeVar(
+                d3.select(this.parentElement.parentElement).datum(),
+                serviceFullList_withExtra
+              );
+              brush();
+            });
+          alltr
+            .filter((d) => d.key === "enable")
+            .append("input")
+            .attrs(function (d, i) {
+              return {
+                type: "checkbox",
+                checked: serviceFullList_withExtra[d.value.order].enable
+                  ? "checked"
+                  : null,
+              };
+            })
+            .on("adjustValue", function (d) {
+              d3.select(this).attr(
+                "checked",
+                serviceFullList_withExtra[d.value.order].enable
+                  ? "checked"
+                  : null
+              );
+            })
+            .on("change", function (d) {
+              debugger;
+              filterAxisbyDom.call(this, d, serviceFullList_withExtra);
+              xscale.domain(dimensions);
+              d3.select(
+                allElem.element.shadowRoot.querySelectorAll("#foreground")[0]
+              ).style("opacity", foreground_opacity);
+              brush();
+            });
+          alltr.filter((d) => d.type === undefined).text((d) => d.value);
+        },
+        (update) => {
+          const tr = update;
+          tr.classed("hide", (d) => d.hide);
+          tr.each(function (d) {
+            d.tableObj = d3.select(this);
+          });
+          tr.attr("data-id", (d) => d.arr);
+          const alltr = tr.selectAll("td").data((d) => [
+            { key: "enable", value: d, type: "checkbox" },
+            {
+              key: "colorBy",
+              value: false,
+              type: "radio",
+            },
+            { key: "text", value: d.text },
+          ]);
+          alltr.filter((d) => d.type === undefined).text((d) => d.value);
+          alltr
+            .filter((d) => d.key === "enable")
+            .select("input")
+            .each(function (d) {
+              this.checked = serviceFullList_withExtra[d.value.order].enable;
+            });
+        }
+      );
+    listMetric = Sortable.create(
+      allElem.element.shadowRoot.querySelectorAll("tbody")[0],
+      {
+        animation: 150,
+        sort: true,
+        dataIdAttr: "data-id",
+        filter: ".disable",
+        onStart: function (/**Event*/ evt) {
+          evt.oldIndex; // element index within parent
+          const currentAxis = d3.select(evt.item).datum();
+          const chosenAxis = svg
+            .selectAll(".dimension")
+            .filter((d) => d == currentAxis.arr);
+          _.bind(dragstart, chosenAxis.node(), chosenAxis.datum())();
+        },
+        onEnd: function (/**Event*/ evt) {
+          var itemEl = evt.item; // dragged HTMLElement
+          evt.to; // target list
+          evt.from; // previous list
+          evt.oldIndex; // element's old index within old parent
+          evt.newIndex; // element's new index within new parent
+          evt.clone; // the clone element
+          evt.pullMode; // when item is in another sortable: `"clone"` if cloning, `true` if moving
+          const currentAxis = d3.select(itemEl).datum();
+          const chosenAxis = svg
+            .selectAll(".dimension")
+            .filter((d) => d == currentAxis.arr);
+          _.bind(dragend, chosenAxis.node(), chosenAxis.datum())();
+        },
+        onMove: function (/**Event*/ evt, /**Event*/ originalEvent) {
+          // Example: https://jsbin.com/nawahef/edit?js,output
+          evt.dragged; // dragged HTMLElement
+          evt.draggedRect; // DOMRect {left, top, right, bottom}
+          evt.related; // HTMLElement on which have guided
+          evt.relatedRect; // DOMRect
+          evt.willInsertAfter; // Boolean that is true if Sortable will insert drag element after target by default
+          originalEvent.clientY; // mouse position
+          // return false; — for cancel
+          // return -1; — insert before target
+          // return 1; — insert after target
+          // console.log(originalEvent);
+          // console.log(d3.event);
+          const currentAxis = d3.select(evt.dragged).datum();
+          const relatedtAxis = d3.select(evt.related).datum();
+          const chosenAxis = svg
+            .selectAll(".dimension")
+            .filter((d) => d === currentAxis.arr);
 
-    //     // d3.event = {};
-    //     // // d3.event.dx = originalEvent.clientY - this.pre; // simulate the drag behavior
-    //     // d3.event.dx = position(relatedtAxis.arr) - position(currentAxis.arr);
-    //     // // simulate the drag behavior
-    //     // d3.event.dx = d3.event.dx + (d3.event.dx > 0 ? 1 : -1);
-    //     // if (!isNaN(d3.event.dx))
-    //     //   _.bind(dragged, chosenAxis.node(), chosenAxis.datum())();
-    //   },
-    // });
+          // d3.event = {};
+          // // d3.event.dx = originalEvent.clientY - this.pre; // simulate the drag behavior
+          // d3.event.dx = position(relatedtAxis.arr) - position(currentAxis.arr);
+          // // simulate the drag behavior
+          // d3.event.dx = d3.event.dx + (d3.event.dx > 0 ? 1 : -1);
+          // if (!isNaN(d3.event.dx))
+          //   _.bind(dragged, chosenAxis.node(), chosenAxis.datum())();
+        },
+      }
+    );
   }
   function update_ticks(d, extent) {
     // update brushes
+    let allElem = myServicee.getCanvusElements();
     if (d) {
-      var brush_el = d3.selectAll(".brush").filter(function (key) {
-        return key == d;
-      });
+      var brush_el = d3
+        .selectAll(allElem.element.shadowRoot.querySelectorAll(".brush"))
+        .filter(function (key) {
+          return key == d;
+        });
       // single tick
       if (extent) {
         // restore previous extent
@@ -1197,14 +1261,18 @@ export function main() {
       }
     } else {
       // all ticks
-      d3.selectAll(".brush").each(function (d) {
-        d3.select(this).call((yscale[d].brush = getBrush(d)));
-      });
+      d3.selectAll(allElem.element.shadowRoot.querySelectorAll(".brush")).each(
+        function (d) {
+          d3.select(this).call((yscale[d].brush = getBrush(d)));
+        }
+      );
     }
     // if (isTick) show_ticks();
 
     // update axes
-    d3.selectAll(".dimension .axis").each(function (d, i) {
+    d3.selectAll(
+      allElem.element.shadowRoot.querySelectorAll(".dimension .axis")
+    ).each(function (d, i) {
       // hide lines for better performance
       d3.select(this).selectAll("line").style("display", "none");
 
@@ -1226,12 +1294,16 @@ export function main() {
     });
   }
 
-  function changeVar(d) {
+  function changeVar(d, serviceFullList_withExtra) {
+    debugger;
     // $('#groupName').text(d.text);
+    let allElem = myServicee.getCanvusElements();
     if (d.arr === "rack") {
       selectedService = null;
       // svgLengend.style('display','none');
-      d3.selectAll(".dimension.axisActive").classed("axisActive", false);
+      d3.selectAll(
+        allElem.element.shadowRoot.querySelectorAll(".dimension.axisActive")
+      ).classed("axisActive", false);
       changeGroupTarget(d.arr);
       //legend = create_legend(colors,brush);
     } else {
@@ -1239,15 +1311,61 @@ export function main() {
         legend.remove();
       } catch (e) {}
       selectedService = d.arr;
-      setColorsAndThresholds(d.service);
+      setColorsAndThresholds(d.service, serviceFullList_withExtra);
       changeGroupTarget(d.arr);
       //legend = drawLegend(d.service, arrThresholds, arrColor, dif);
       // svgLengend.style('display',null);
-      d3.selectAll(".dimension.axisActive").classed("axisActive", false);
-      d3.selectAll(".dimension")
+      d3.selectAll(
+        allElem.element.shadowRoot.querySelectorAll(".dimension.axisActive")
+      ).classed("axisActive", false);
+      d3.selectAll(allElem.element.shadowRoot.querySelectorAll(".dimension"))
         .filter((e) => e === selectedService)
         .classed("axisActive", true);
     }
+  }
+  function changeGroupTarget(key) {
+    if (key === "rack") data.forEach((d) => (d.group = d.rack));
+    else {
+      var thresholdScale = function (scale, d) {
+        if (d)
+          return d3
+            .bisector(function (d) {
+              return d;
+            })
+            .right(scale, d);
+        return undefined;
+      };
+      let nameLegend = rangeToString(arrThresholds);
+      let arrmidle = arrThresholds.slice(1);
+      orderLegend = d3.merge([
+        nameLegend
+          .map((d, i) => {
+            return { text: d, value: arrmidle[i], minvalue: arrThresholds[i] };
+          })
+          .reverse(),
+        [
+          {
+            text: undefined,
+            value: arrThresholds[1] + arrmidle[0] - arrmidle[1],
+            minvalue: -Infinity,
+          },
+        ],
+      ]);
+      data.forEach(
+        (d) => (d.group = nameLegend[thresholdScale(arrmidle, d[key])])
+      );
+    }
+  }
+  function rangeToString(arr) {
+    let midleRange = arr.slice(1, 0 - 1);
+    let mapRangeName = ["(<" + midleRange[0] + ")"];
+    midleRange
+      .slice(1)
+      .forEach((d, i) =>
+        mapRangeName.push("(" + midleRange[i] + "-" + d + ")")
+      );
+    mapRangeName.push("(>" + midleRange[midleRange.length - 1] + ")");
+    return mapRangeName;
   }
   function setColorsAndThresholds(sin, serviceFullList_withExtra) {
     let s = serviceFullList_withExtra.find((d) => d.text === sin);

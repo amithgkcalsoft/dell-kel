@@ -38,13 +38,62 @@
         <my-component first="Stencil" last=""></my-component>
       </div>
       <div id="Maincontent" style="width: 70%; float: left;">
-        <parallel-coordinates completedata=""></parallel-coordinates>
+        <parallel-coordinates></parallel-coordinates>
       </div>
     </div>
     <script>
       $(document).ready(function () {
+        debugger;
         let cmp = document.querySelector("parallel-coordinates");
 
+        d3.csv("./data/sampleData.csv").then(function (data) {
+          data = data.slice(0, 10);
+
+          data.forEach((d) => {
+            d.Time = new Date(
+              d3.timeFormat("%a %b %d %X CDT %Y")(
+                new Date(+d.Time ? +d.Time : d.Time.replace("Z", ""))
+              )
+            );
+            for (const property in d) {
+              if (
+                property != "Time" &&
+                property != "compute" &&
+                property != "group" &&
+                property != "id" &&
+                property != "name" &&
+                property != "rack"
+              )
+                d[property] = JSON.parse(d[property]);
+            }
+          });
+          cmp.completedata = data;
+        });
+        setTimeout(function () {
+          d3.csv("./data/sampleData.csv").then(function (data) {
+            data = data.slice(0, 66);
+
+            data.forEach((d) => {
+              d.Time = new Date(
+                d3.timeFormat("%a %b %d %X CDT %Y")(
+                  new Date(+d.Time ? +d.Time : d.Time.replace("Z", ""))
+                )
+              );
+              for (const property in d) {
+                if (
+                  property != "Time" &&
+                  property != "compute" &&
+                  property != "group" &&
+                  property != "id" &&
+                  property != "name" &&
+                  property != "rack"
+                )
+                  d[property] = JSON.parse(d[property]);
+              }
+            });
+            cmp.completedata = data;
+          });
+        }, 5000);
         // d3.json("./data/influxdb17Feb_2020_withoutJobLoad.json").then(function (
         //   data
         // ) {
