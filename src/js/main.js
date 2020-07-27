@@ -797,7 +797,7 @@ export function main() {
         parents: { name: "Kumar", mother: "Saroja", age: 55 },
       },
       {
-        name: "Gujjar",
+        name: "Nmae",
         age: 39,
         case: "Lower",
         parents: {
