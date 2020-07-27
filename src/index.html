@@ -34,16 +34,15 @@
       }
     </style>
     <div style="width: 100%;">
-      <div style="width: 30%; float: left;">
+      <!-- <div style="width: 30%; float: left;">
         <my-component first="Stencil" last=""></my-component>
-      </div>
-      <div id="Maincontent" style="width: 70%; float: left;">
-        <parallel-coordinates></parallel-coordinates>
+      </div> -->
+      <div style="width: 100%; float: left;">
+        <my-component></my-component>
       </div>
     </div>
-    <script>
+    <!-- <script>
       $(document).ready(function () {
-        debugger;
         let cmp = document.querySelector("parallel-coordinates");
 
         d3.csv("./data/sampleData.csv").then(function (data) {
@@ -121,6 +120,6 @@
           rack: "Rack 1",
         }; // arr is the array you are want to pass
       });
-    </script>
+    </script> -->
   </body>
 </html>

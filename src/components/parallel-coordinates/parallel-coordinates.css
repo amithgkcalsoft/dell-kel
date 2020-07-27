@@ -29,3 +29,53 @@ body {
   fill: #5ae !important;
   color: #5ae;
 }
+.w-30 {
+  width: 25%;
+  float: left;
+}
+.w-70 {
+  width: 70%;
+  float: left;
+}
+.w-50 {
+  width: 50%;
+  float: left;
+}
+.w-100 {
+  width: 100%;
+  float: left;
+}
+.fillbar {
+  height: 12px;
+  line-height: 12px;
+  border: 1px solid rgba(120, 120, 120, 0.5);
+  width: 120px;
+  display: inline-block;
+}
+#rendered-bar,
+#selected-bar {
+  width: 0%;
+  font-weight: bold;
+}
+#rendered-bar {
+  background: #dc9c9c;
+  border-right: 1px solid #666;
+}
+#selected-bar {
+  background: rgba(160, 160, 160, 0.5);
+  border-right: 1px solid #999;
+}
+.top-bar {
+  text-align: right;
+  margin-bottom: 20px;
+}
+.text-right {
+  text-align: right;
+}
+button#exclude-data {
+  font-weight: bold;
+}
+
+button#exclude-data:hover {
+  color: #900;
+}

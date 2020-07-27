@@ -21,7 +21,7 @@ export namespace Components {
         "selectedRange": Array<Object>;
     }
     interface ParallelCoordinates {
-        "completedata": Array<Object>;
+        "completeData": Array<Object>;
         "singleData": string;
     }
     interface SecComponent {
@@ -68,7 +68,8 @@ declare namespace LocalJSX {
         "selectedRange"?: Array<Object>;
     }
     interface ParallelCoordinates {
-        "completedata"?: Array<Object>;
+        "completeData"?: Array<Object>;
+        "onBrushCompleted"?: (event: CustomEvent<Array<Object>>) => void;
         "singleData"?: string;
     }
     interface SecComponent {

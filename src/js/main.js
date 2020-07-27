@@ -57,6 +57,7 @@ export function main() {
   const TIMEFORMAT = d3.timeFormat("%B %d %Y %H:%M");
 
   var stickKey = TIMEKEY;
+  var stickKeyFormat = TIMEFORMAT;
   conf.serviceList = settings.serviceList;
   conf.serviceLists = settings.serviceLists;
   conf.serviceListattr = settings.serviceListattr;
@@ -163,6 +164,87 @@ export function main() {
     return newdata;
   }
 
+  window.onresize = function () {
+    // animationtime = false;
+    try {
+      resetSize();
+    } catch (e) {}
+  };
+  function resetSize() {
+    debugger;
+    let allElem = myServicee.getCanvusElements();
+    width = d3
+      .select(allElem.element.shadowRoot.querySelectorAll("#Maincontent")[0])
+      .style("width")
+      .slice(0, -2);
+    height = d3.max([document.body.clientHeight - 150, 300]);
+    w = width - m[1] - m[3];
+    h = height - m[0] - m[2];
+    let chart = d3
+      .select(allElem.chart)
+      .style("height", h + m[0] + m[2] + "px");
+
+    chart
+      .selectAll("canvas")
+      .attr("width", w)
+      .attr("height", h)
+      .style("padding", m.join("px ") + "px");
+
+    chart
+      .select("svg")
+      .attr("width", w + m[1] + m[3])
+      .attr("height", h + m[0] + m[2])
+      .select("g")
+      .attr("transform", "translate(" + m[3] + "," + m[0] + ")");
+    // Foreground canvas for primary view
+    foreground.lineWidth = 1.7;
+    // Highlight canvas for temporary interactions
+    highlighted.lineWidth = 4;
+
+    // Background canvas
+    background.lineWidth = 1.7;
+
+    xscale = d3.scalePoint().range([0, w]).padding(0.3).domain(dimensions);
+    dimensions.forEach(function (d) {
+      yscale[d].range([h, 0]);
+    });
+
+    d3.selectAll(
+      allElem.element.shadowRoot.querySelectorAll(".dimension")
+    ).attr("transform", function (d) {
+      return "translate(" + xscale(d) + ")";
+    });
+    // update brush placement
+    d3.selectAll(allElem.element.shadowRoot.querySelectorAll(".brush")).each(
+      function (d) {
+        d3.select(this).call(
+          (yscale[d].brush = d3
+            .brushY(yscale[d])
+            .extent([
+              [-10, 0],
+              [10, h],
+            ])
+            .on("brush", function () {
+              isChangeData = true;
+              brush(true);
+            })
+            .on("end", function () {
+              isChangeData = true;
+              brush();
+            }))
+        );
+      }
+    );
+
+    // update axis placement
+    (axis = axis.ticks(1 + height / 50)),
+      d3.selectAll(".dimension .axis").each(function (d) {
+        d3.select(this).call(getScale(d));
+      });
+
+    // render data
+    brush();
+  }
   function getBrush(d) {
     return d3
       .brushY(yscale[d])
@@ -272,7 +354,6 @@ export function main() {
     }
   }
   function invert_axis(d) {
-    debugger;
     // save extent before inverting
     let allElem = myServicee.getCanvusElements();
     let extent;
@@ -430,7 +511,6 @@ export function main() {
     isTick = true;
   }
   function plotViolin(allElementsObj) {
-    debugger;
     selected = shuffled_data;
     let cluster_info = [];
     let violin_w = Math.min(
@@ -497,9 +577,7 @@ export function main() {
     }, 0);
   }
   function onChangeOfShow(allElementsObj) {
-    debugger;
     axisPlot = d3.select(allElementsObj.overlayPlot).on("change", function () {
-      debugger;
       switch ($(this).val()) {
         case "none":
           d3.selectAll(
@@ -543,8 +621,14 @@ export function main() {
     });
   }
 
-  function initFunc(sampleS, serviceFullList_withExtra, allElementsObj) {
+  function initFunc(
+    sampleS,
+    serviceFullList_withExtra,
+    allElementsObj,
+    brushCompleted
+  ) {
     debugger;
+
     // d3.viiolinplot = viiolinplot;
     violiin_chart = viiolinplot().graphicopt({
       width: 160,
@@ -569,7 +653,18 @@ export function main() {
     dimensions = [];
     timel;
     if (timel) timel.stop();
-    width = $("#Maincontent").width() - 10;
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#exclude-data")[0]
+    ).on("click", exclude_data);
+    width = d3
+      .select(allElem.element.shadowRoot.querySelectorAll("#Maincontent")[0])
+      // get the width of div element
+      .style("width")
+      // take of 'px'
+      .slice(0, -2);
+    // return as an integer
+    width = Math.round(Number(width));
+
     height = d3.max([document.body.clientHeight - 150, 300]);
     w = width - m[1] - m[3];
     h = height - m[0] - m[2];
@@ -596,13 +691,13 @@ export function main() {
     // foreground.fillText("Loading...",w/2,h/2);
 
     // Highlight canvas for temporary interactions
-    let highlighted = allElem.highlighted;
+    highlighted = allElem.highlighted;
     highlighted = highlighted.getContext("2d");
     highlighted.strokeStyle = "rgba(0,100,160,1)";
     highlighted.lineWidth = 4;
 
     // Background canvas
-    let background = allElem.background;
+    background = allElem.background;
     background = background.getContext("2d");
     background.strokeStyle = "rgba(0,100,160,0.1)";
     background.lineWidth = 1.7;
@@ -694,8 +789,104 @@ export function main() {
     //   serviceFullList_withExtra
     // );
     // Render full foreground
+    brushCompleted.emit([
+      {
+        name: "Amith",
+        age: 24,
+        case: "Upper",
+        parents: { name: "Kumar", mother: "Saroja", age: 55 },
+      },
+      {
+        name: "Gujjar",
+        age: 39,
+        case: "Lower",
+        parents: {
+          name: "Kumar Gujjar",
+          mother: "Saroja Gujjar",
+          age: 85,
+        },
+      },
+    ]);
     brush();
     console.log("---init---");
+  }
+  function exclude_data() {
+    let new_data = _.difference(data, actives());
+    if (new_data.length == 0) {
+      alert(
+        "I don't mean to be rude, but I can't let you remove all the data.\n\nTry selecting just a few data points then clicking 'Exclude'."
+      );
+      return false;
+    }
+    data = new_data;
+    rescale();
+  }
+  function actives() {
+    let actives = [],
+      extents = [];
+    svg
+      .selectAll(".brush")
+      .filter(function (d) {
+        yscale[d].brushSelectionValue = d3.brushSelection(this);
+        return d3.brushSelection(this);
+      })
+      .each(function (d) {
+        // Get extents of brush along each active selection axis (the Y axes)
+        actives.push(d);
+        extents.push(
+          d3
+            .brushSelection(this)
+            .map(yscale[d].invert)
+            .sort((a, b) => a - b)
+        );
+      });
+    // filter extents and excluded groups
+    var selected = [];
+    data.forEach(function (d) {
+      if (!excluded_groups.find((e) => e === d.group))
+        !actives.find(function (p, dimension) {
+          return extents[dimension][0] > d[p] || d[p] > extents[dimension][1];
+        })
+          ? selected.push(d)
+          : null;
+    });
+
+    // free text search
+    // var query = d3.select("#search").node().value;
+    // if (query > 0) {
+    //   selected = search(selected, query);
+    // }
+
+    return selected;
+  }
+  function rescale(skipRender) {
+    // adjustRange(data);
+    serviceFullList_withExtraa.forEach(function (s) {
+      let k = s.text;
+      let xtempscale =
+        (s.isDate &&
+          (yscale[k] = d3
+            .scaleTime()
+            .domain(
+              d3.extent(data, function (d) {
+                return d[k];
+              })
+            )
+            .range([h, 0]))) ||
+        (yscale[k] = d3
+          .scaleLinear()
+          // .domain(d3.extent(data, function (d) {
+          //     return +d[k];
+          // }))
+          .domain(
+            serviceFullList_withExtraa.find((d) => d.text === k).range || [0, 0]
+          )
+          .range([h, 0]));
+      if (s.axisCustom) xtempscale.axisCustom = s.axisCustom;
+    });
+    update_ticks();
+    // Render selected data
+    if (!skipRender) paths(data, foreground, brush_count);
   }
   function brush(isreview) {
     var actives = [],
@@ -767,13 +958,17 @@ export function main() {
     //   selected = search(selected, query);
     // }
 
-    // if (selected.length < data.length && selected.length > 0) {
-    //   d3.select("#keep-data").attr("disabled", null);
-    //   d3.select("#exclude-data").attr("disabled", null);
-    // } else {
-    //   d3.select("#keep-data").attr("disabled", "disabled");
-    //   d3.select("#exclude-data").attr("disabled", "disabled");
-    // }
+    if (selected.length < data.length && selected.length > 0) {
+      d3.select("#keep-data").attr("disabled", null);
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("#exclude-data")[0]
+      ).attr("disabled", null);
+    } else {
+      d3.select("#keep-data").attr("disabled", "disabled");
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("#exclude-data")[0]
+      ).attr("disabled", "disabled");
+    }
 
     // total by food group
     var tallies = _(selected).groupBy(function (d) {
@@ -797,10 +992,26 @@ export function main() {
   }
 
   let complex_data_table_render = false;
+  const collator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: "base",
+  });
+  Array.prototype.naturalSort = function (_) {
+    if (arguments.length) {
+      return this.sort(function (as, bs) {
+        return collator.compare(as[_], bs[_]);
+      });
+    } else {
+      return this.sort(collator.compare);
+    }
+  };
   function complex_data_table(sample, render) {
+    debugger;
+    let allElem = myServicee.getCanvusElements();
     if (
-      complex_data_table_render &&
-      (render || !d3.select(".searchPanel.active").empty())
+      complex_data_table_render
+      // &&
+      // (render || !d3.select(".searchPanel.active").empty())
     ) {
       var samplenest = d3
         .nest()
@@ -810,11 +1021,13 @@ export function main() {
         .sortKeys(collator.compare)
         .sortValues((a, b) => a.Time - b.Time)
         .entries(sample);
-      let instance = M.Collapsible.getInstance("#compute-list");
-      if (instance) instance.destroy();
-      d3.select("#compute-list").html("");
+      // let instance = M.Collapsible.getInstance("#compute-list");
+      // if (instance) instance.destroy();
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("#compute-list")[0]
+      ).html("");
       var table = d3
-        .select("#compute-list")
+        .select(allElem.element.shadowRoot.querySelectorAll("#compute-list")[0])
         .attr("class", "collapsible rack")
         .selectAll("li")
         .data(samplenest, (d) => d.value);
@@ -881,23 +1094,88 @@ export function main() {
         });
         return p;
       }
-      $("#compute-list.collapsible,#compute-list .collapsible").collapsible({
-        onOpenStart: function (evt) {
-          if (d3.select(evt).classed("compute"))
-            d3.select(evt).call(updateComtime);
-        },
-      });
+      // $("#compute-list.collapsible,#compute-list .collapsible").collapsible({
+      //   onOpenStart: function (evt) {
+      //     if (d3.select(evt).classed("compute"))
+      //       d3.select(evt).call(updateComtime);
+      //   },
+      // });
+
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("li.compute")[0]
+      ).call(updateComtime);
+
       complex_data_table_render = false;
     }
   }
+  function highlight(d) {
+    debugger;
+    let allElem = myServicee.getCanvusElements();
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#foreground")[0]
+    ).style("opacity", "0.25");
+    if (selectedService) {
+      const val = d[selectedService];
+      const gourpBeloing = orderLegend.find(
+        (dv) => val >= dv.minvalue && val < dv.value
+      ) || { text: undefined };
 
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("#colorContinuos")[0]
+      )
+        .selectAll(".row")
+        .style("opacity", function (p) {
+          return gourpBeloing.text === p ? null : "0.3";
+        });
+    } else {
+      d3.select(allElem.element.shadowRoot.querySelectorAll("#legend")[0])
+        .selectAll(".row")
+        .style("opacity", function (p) {
+          return d.group == p ? null : "0.3";
+        });
+    }
+    path(
+      d,
+      highlighted,
+      colorCanvas(selectedService == null ? d.group : d[selectedService], 1)
+    );
+  }
+
+  // Remove highlight
+  function unhighlight() {
+    debugger;
+    let allElem = myServicee.getCanvusElements();
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#foreground")[0]
+    ).style("opacity", foreground_opacity);
+    d3.select(allElem.element.shadowRoot.querySelectorAll("#legend")[0])
+      .selectAll(".row")
+      .style("opacity", null);
+    if (selectedService) {
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("#colorContinuos")[0]
+      )
+        .selectAll(".row")
+        .style("opacity", null);
+    } else {
+      d3.select(allElem.element.shadowRoot.querySelectorAll("#legend")[0])
+        .selectAll(".row")
+        .style("opacity", null);
+    }
+    highlighted.clearRect(0, 0, w, h);
+  }
   function redraw(selected) {
+    let allElem = myServicee.getCanvusElements();
     if (selected.length < data.length && selected.length > 0) {
       d3.select("#keep-data").attr("disabled", null);
-      d3.select("#exclude-data").attr("disabled", null);
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("#exclude-data")[0]
+      ).attr("disabled", null);
     } else {
       d3.select("#keep-data").attr("disabled", "disabled");
-      d3.select("#exclude-data").attr("disabled", "disabled");
+      d3.select(
+        allElem.element.shadowRoot.querySelectorAll("#exclude-data")[0]
+      ).attr("disabled", "disabled");
     }
 
     // total by food group
@@ -914,12 +1192,13 @@ export function main() {
     paths(selected, foreground, brush_count, true);
   }
   function paths(selected, ctx, count) {
+    debugger;
     var n = selected.length,
       i = 0,
       opacity = d3.min([2 / Math.pow(n, 0.3), 1]),
       timer = new Date().getTime();
 
-    // selection_stats(opacity, n, data.length);
+    selection_stats(opacity, n, data.length);
 
     //shuffled_data = _.shuffle(selected);
 
@@ -941,8 +1220,37 @@ export function main() {
       timer = optimize(timer); // adjusts render_speed
     }
     if (timel) timel.stop();
-    timel = d3.timer(animloop);
+    timel = d3.timer(animloop, 100);
     if (isChangeData) axisPlot.dispatch("plot", selected);
+  }
+  function render_stats(i, n, render_speed) {
+    debugger;
+    let allElem = myServicee.getCanvusElements();
+
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#rendered-count")[0]
+    ).text(i);
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#rendered-bar")[0]
+    ).style("width", (100 * i) / n + "%");
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#render-speed")[0]
+    ).text(render_speed);
+  }
+  function selection_stats(opacity, n, total) {
+    let allElem = myServicee.getCanvusElements();
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#data-count")[0]
+    ).text(total);
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#selected-count")[0]
+    ).text(n);
+    d3.select(
+      allElem.element.shadowRoot.querySelectorAll("#selected-bar")[0]
+    ).style("width", (100 * n) / total + "%");
+    d3.select(allElem.element.shadowRoot.querySelectorAll("#opacity")[0]).text(
+      ("" + opacity * 100).slice(0, 4) + "%"
+    );
   }
   function optimize(timer) {
     var delta = new Date().getTime() - timer;
@@ -973,11 +1281,7 @@ export function main() {
     c.opacity = a;
     return c;
   }
-  function render_stats(i, n, render_speed) {
-    d3.select("#rendered-count").text(i);
-    d3.select("#rendered-bar").style("width", (100 * i) / n + "%");
-    d3.select("#render-speed").text(render_speed);
-  }
+
   function path(d, ctx, color) {
     if (color) ctx.strokeStyle = color;
     ctx.beginPath();
@@ -1058,7 +1362,6 @@ export function main() {
 
   let listOption = [];
   function drawFiltertable(serviceFullList_withExtra, allElem) {
-    debugger;
     listOption = serviceFullList_withExtra.map((e, ei) => {
       return {
         service: e.text,
@@ -1295,7 +1598,6 @@ export function main() {
   }
 
   function changeVar(d, serviceFullList_withExtra) {
-    debugger;
     // $('#groupName').text(d.text);
     let allElem = myServicee.getCanvusElements();
     if (d.arr === "rack") {
